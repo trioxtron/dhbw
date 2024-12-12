@@ -66,7 +66,11 @@ def play_round(game, player):
     print("--------------------------------------------------")
 
     # Get the players answer
-    answer = input("Enter the number of your answer: ")
+    answer = int(input("Enter the number of your answer: "))
+    while answer > 4 or answer < 1:
+        print("Invalid answer! Please enter a number between 1 and 4.")
+        answer = int(input("Enter the number of your answer: "))
+
 
     # Check if the answer is correct
     correct_answer, correct_option = question.check_answer(answer)
