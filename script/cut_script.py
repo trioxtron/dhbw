@@ -42,6 +42,8 @@ def cut_pdf(input_file:str, output_file:str):
 
 if __name__ == '__main__':
     for file in os.listdir('files'):
+        if file[-4:] != '.pdf':
+            continue
         print("Reading " + file)
         file = file.split('.')[0]
         full, cut = cut_pdf(file, file + '_cut')
