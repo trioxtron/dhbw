@@ -1,0 +1,40 @@
+.menu {
+    margin-top: 3em;
+    margin-bottom: 6em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-category {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: center;
+    padding: 1em;
+}
+
+.menu-category p {
+    margin-bottom: 1.5em;
+}
+
+.menu-image {
+    width: 22em;
+    height: 22em;
+    margin-bottom: 0.5em;
+    margin-right: 1em;
+    margin-left: 1em;
+    object-fit: cover;
+}
+
+.menu-list {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.menu-list > li {
+    padding: 0.25em;
+    font-size: 1.2em;
+}
+

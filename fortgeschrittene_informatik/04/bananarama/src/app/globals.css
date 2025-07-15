@@ -1,0 +1,97 @@
+* {
+    margin-top:0;
+    color: white;
+}
+
+::selection {
+    background: #ff9800;
+    text-shadow: none;
+}
+
+.header, .content, .footer {
+    background-color: #121212;
+    text-align: center;
+}
+
+/* Flex layout for the full app */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+/* Main content should expand to fill remaining space */
+.content {
+  flex: 1;
+}
+
+
+body {
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    background-color: #121212;
+    padding: 0;
+    margin: 0; }
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+
+a:hover {
+    color: #ff9800;
+}
+
+h2 {
+    padding-top: 2em;
+}
+
+#opening-hours {
+    font-size: 1.2em;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 2em auto;
+}
+label {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1em;
+    text-align: left;
+    width: 24em
+}
+
+input, textarea {
+    padding: 0.5em;
+    margin-top: 0.5em;
+    border: 1px solid #ff9800;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #1e1e1e;
+    color: white;
+    border-color: #444;
+}
+.submit-button {
+    background-color: #ff9800;
+    padding: 0.5em 1em;
+    border: none;
+    border-radius: 1em;
+    font-size: 1.2em;
+}
+
+.submit-button:hover {
+    background-color: #e68900;
+}
+
+.check-message {
+    margin-top: 2em;
+}
