@@ -1,0 +1,144 @@
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  color: white;
+  background: #121212;
+  font-family: Helvetica, Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2em;
+}
+
+
+.login-choice {
+    display: flex;
+    justify-content: center;
+}
+
+.login-choice > a {
+    padding: 0.5em 1em;
+    border: 0.1em solid #00415a;
+    border-radius: 1em;
+    background-color: #1e1e1e;
+    font-size: 1.2em;
+    margin: 1em 1em;
+}
+
+.login-choice > a:hover {
+    background-color: #00415a;
+}
+.submit-button {
+    background-color: #1e1e1e;
+    padding: 0.5em 1em;
+    border: 0.1em solid #00415a;
+    border-radius: 1em;
+    font-size: 1.2em;
+}
+
+.submit-button:hover {
+    background-color: #00415a;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 2em auto;
+}
+form > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+label {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1em;
+    text-align: left;
+    width: 24em
+}
+
+input {
+    padding: 0.5em;
+    margin-top: 0.5em;
+    border: 1px solid black;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #1e1e1e;
+    color: white;
+    border-color: #444;
+}
+
+input:focus {
+    outline: none;
+    border: 2px solid #00415a;
+    border-color: #00415a;
+}
+
+.weather-container {
+    display: flex;
+    margin-top: 2em;
+}
+
+.weather-container > div {
+    margin: 0 1em;
+}
+
+.weather-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #151515;
+    padding: 1em;
+    border-radius: 1em;
+    margin-top: 2em;
+}
+
+.weather-details {
+    display: flex;
+    justify-content: space-between;
+}
+
+.weather-details p {
+    margin: 0 0.5em;
+}
+
+.weather-card h2 {
+    margin-bottom: 0.2em;
+}
+
+.weather-condition {
+    margin-bottom: 1em;
+}
