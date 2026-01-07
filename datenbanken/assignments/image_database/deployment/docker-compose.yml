@@ -1,0 +1,59 @@
+services:
+  db:
+    image: postgres:15
+    hostname: postgres
+    container_name: images-postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: image_db 
+      POSTGRES_PASSWORD: test1234 
+      TZ: Europe/Berlin
+    volumes:
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+      - image-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "image_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    logging:
+      driver: none
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: images-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.de
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    volumes:
+      - image-pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      db:
+        condition: service_healthy
+
+  migrate:
+    image: migrate/migrate
+    container_name: image-db-migration
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ../db/migrations:/migrations
+    entrypoint:
+      [
+        "migrate",
+        "-path",
+        "/migrations",
+        "-database",
+        "postgres://postgres:test1234@postgres:5432/image_db?sslmode=disable",
+        "up",
+      ]
+
+volumes:
+  image-db-data:
+  image-pgadmin-data:
+
