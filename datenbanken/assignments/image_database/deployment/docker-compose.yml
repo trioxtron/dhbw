@@ -1,4 +1,17 @@
 services:
+  app:
+    container_name: image-app
+    build:
+      context: ../src
+      dockerfile: Dockerfile
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    ports:
+      - "8501:8501"
+
   db:
     image: postgres:15
     hostname: postgres
