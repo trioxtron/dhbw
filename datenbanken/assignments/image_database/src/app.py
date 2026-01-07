@@ -1,142 +1,49 @@
 import streamlit as st
-import psycopg2
-
-from sentence_transformers import SentenceTransformer
-from PIL import Image
 import json
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
-HOST = "localhost"
-HOST = "postgres"
-PORT = 5432
-USER = "postgres"
-DB_NAME = "image_db"
-PASSWORD = "test1234"
+from utils.model import load_model, get_image_embedding
+from utils.db import insert_image, search_images_by_tags, get_all_images_with_embeddings
 
-DB_URI = f"postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{DB_NAME}"
-
-# load and cache the model
-@st.cache_resource
-def load_model():
-    return SentenceTransformer('clip-ViT-B-32')
-
-model = load_model()
-
-
-def get_image_embedding(image_file):
-    # convert file to PIL Image for the model
-    img = Image.open(image_file)
-
-    # get embedding
-    embedding = model.encode(img)
-
-    # return as list for JSON serialization
-    return embedding.tolist() 
-
-
-def save_image_to_db(file_obj, tags_string):
-    conn = psycopg2.connect(DB_URI)
-    c = conn.cursor()
-    
+def save_image_to_db(model, file_obj, tags_string):
     try:
         # save image blob
         file_obj.seek(0) 
         bytes_data = file_obj.read()
         filename = file_obj.name
+
         
         # calculate embedding
         file_obj.seek(0) 
-        embedding_list = get_image_embedding(file_obj)
+        embedding_list = get_image_embedding(model, file_obj)
         embedding_json = json.dumps(embedding_list)
-        
-        # insert image
-        c.execute("""
-            INSERT INTO images (filename, image_data, embedding) 
-            VALUES (%s, %s, %s) 
-            RETURNING id
-        """, (filename, bytes_data, embedding_json))        
 
-        # get image id
-        new_image_id = c.fetchone()[0]
-        
-
-        # save tags and links
-        tag_list = [t.strip().lower() for t in tags_string.split(',') if t.strip()]
-        
-        for tag_val in tag_list:
-            c.execute("""
-                INSERT INTO tags (name) 
-                VALUES (%s) 
-                ON CONFLICT (name) DO NOTHING
-            """, (tag_val,))
+        # insert into database
+        insert_image(filename, bytes_data, embedding_json, tags_string)
             
-            # get tag id
-            c.execute("SELECT id FROM tags WHERE name = %s", (tag_val,))
-            tag_id = c.fetchone()[0]
-            
-            # link image and tag
-            c.execute("""
-                INSERT INTO image_tags (image_id, tag_id) 
-                VALUES (%s, %s) 
-                ON CONFLICT DO NOTHING
-            """, (new_image_id, tag_id))
-            
-        conn.commit()
         return True, f"Image '{filename}' successfully saved!"
         
     except Exception as e:
-        conn.rollback() 
         return False, str(e)
-    finally:
-        c.close()
-        conn.close()
+
 
 def search_images_in_db(tags_string):
-    conn = psycopg2.connect(DB_URI)
-    c = conn.cursor()
-    
     search_list = [t.strip().lower() for t in tags_string.split(',') if t.strip()]
     if not search_list:
         return []
 
-    # get the search tags
-    search_tags = ','.join(['%s'] * len(search_list))
-    
-    sql = f'''
-        SELECT i.filename, i.image_data
-        FROM images i
-        JOIN image_tags it ON i.id = it.image_id
-        JOIN tags t ON it.tag_id = t.id
-        WHERE t.name IN ({search_tags})
-        GROUP BY i.id, i.filename, i.image_data
-        HAVING COUNT(DISTINCT t.id) = %s
-    '''
-    
-    # generate params
-    params = search_list + [len(search_list)]
-    
-    # query execution
-    c.execute(sql, params)
-    results = c.fetchall()
-    
-    c.close()
-    conn.close()
-    return results
+    return search_images_by_tags(search_list)
 
 
 def search_similar_images(query_image_file, top_k=3):
     """Sucht ähnliche Bilder basierend auf Vektor-Ähnlichkeit."""
     
     # calculate embedding for the query image
-    query_embedding = get_image_embedding(query_image_file)
+    query_embedding = get_image_embedding(model, query_image_file)
     
     # get all images with embeddings
-    conn = psycopg2.connect(DB_URI)
-    c = conn.cursor()
-    c.execute("SELECT id, filename, image_data, embedding FROM images WHERE embedding IS NOT NULL")
-    rows = c.fetchall()
-    conn.close()
+    rows = get_all_images_with_embeddings()
     
     if not rows:
         return []
@@ -174,74 +81,77 @@ def search_similar_images(query_image_file, top_k=3):
     return results
 
 
-# app layout
-st.set_page_config(layout="centered")
-#st.title("")
+if __name__ == "__main__":
+    model = load_model()
 
-# control panel for mode selection
-selected_mode = st.segmented_control(
-    "select mode",
-    options=["upload", "tag search", "reverse search"],
-    selection_mode="single",
-    default="upload",
-    label_visibility="collapsed"
-)
+    # app layout
+    st.set_page_config(layout="centered")
+    #st.title("")
 
-if selected_mode == "upload":
-    st.header("upload image")
-    
-    uploaded_file = st.file_uploader("choose image (png, jpg, jpeg)", type=['png', 'jpg', 'jpeg'])
-    tags_input = st.text_input("enter tags for the image (comma separated):")
-    
-    if st.button("save image to database"):
-        if uploaded_file is not None and tags_input:
-            success, message = save_image_to_db(uploaded_file, tags_input)
-            if success:
-                st.success(message)
+    # control panel for mode selection
+    selected_mode = st.segmented_control(
+        "select mode",
+        options=["upload", "tag search", "reverse search"],
+        selection_mode="single",
+        default="upload",
+        label_visibility="collapsed"
+    )
+
+    if selected_mode == "upload":
+        st.header("upload image")
+        
+        uploaded_file = st.file_uploader("choose image (png, jpg, jpeg)", type=['png', 'jpg', 'jpeg'])
+        tags_input = st.text_input("enter tags for the image (comma separated):")
+        
+        if st.button("save image to database"):
+            if uploaded_file is not None and tags_input:
+                success, message = save_image_to_db(model, uploaded_file, tags_input)
+                if success:
+                    st.success(message)
+                else:
+                    st.error(f"error: {message}")
             else:
-                st.error(f"error: {message}")
-        else:
-            st.warning("please enter an image and at least one tag to save")
+                st.warning("please enter an image and at least one tag to save")
 
-elif selected_mode == "reverse search":
-    st.header("reverse image search")
-    st.info("upload image to find similar images in the database")
-    
-    ai_upload = st.file_uploader("upload image to reverse search", type=['png', 'jpg', 'jpeg'])
-    
-    if ai_upload and st.button("start reverse search"):
-        with st.spinner("searching for similar images..."):
-            results = search_similar_images(ai_upload)
-            
-        if results:
-            st.success(f"{len(results)} similar images found:")
-            
-            # show results in columns
-            cols = st.columns(len(results))
-            for idx, (filename, image_bytes, score) in enumerate(results):
-                with cols[idx]:
-                    st.image(bytes(image_bytes), caption=f"{filename}\nsimilarity: {score:.1%}")
-        else:
-            st.warning("no images found similar to the uploaded image")
-
-
-else:
-    # tag search mode
-    st.header("search")
-    
-    search_input = st.text_input("enter tags to search (comma separated):")
-    
-    if st.button("search"):
-        if search_input:
-            results = search_images_in_db(search_input)
-            
+    elif selected_mode == "reverse search":
+        st.header("reverse image search")
+        st.info("upload image to find similar images in the database")
+        
+        ai_upload = st.file_uploader("upload image to reverse search", type=['png', 'jpg', 'jpeg'])
+        
+        if ai_upload and st.button("start reverse search"):
+            with st.spinner("searching for similar images..."):
+                results = search_similar_images(ai_upload)
+                
             if results:
-                st.success(f"{len(results)} images found with the given tags:")
-
-                # show results
-                for filename, image_bytes in results:
-                    st.image(bytes(image_bytes), caption=filename, width=300)
+                st.success(f"{len(results)} similar images found:")
+                
+                # show results in columns
+                cols = st.columns(len(results))
+                for idx, (filename, image_bytes, score) in enumerate(results):
+                    with cols[idx]:
+                        st.image(bytes(image_bytes), caption=f"{filename}\nsimilarity: {score:.1%}")
             else:
-                st.info("no images found with the given tags")
-        else:
-            st.warning("enter at least one tag to search")
+                st.warning("no images found similar to the uploaded image")
+
+
+    else:
+        # tag search mode
+        st.header("search")
+        
+        search_input = st.text_input("enter tags to search (comma separated):")
+        
+        if st.button("search"):
+            if search_input:
+                results = search_images_in_db(search_input)
+                
+                if results:
+                    st.success(f"{len(results)} images found with the given tags:")
+
+                    # show results
+                    for filename, image_bytes in results:
+                        st.image(bytes(image_bytes), caption=filename, width=300)
+                else:
+                    st.info("no images found with the given tags")
+            else:
+                st.warning("enter at least one tag to search")
