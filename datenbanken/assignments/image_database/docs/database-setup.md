@@ -5,6 +5,7 @@ erDiagram
         varchar filename
         bytea image_data 
         varchar description
+        jsonb embedding
     }
 
     tags {
@@ -19,4 +20,5 @@ erDiagram
 
     images ||--o{ image_tags : ""
     tags ||--o{ image_tags : ""
+
 ```
