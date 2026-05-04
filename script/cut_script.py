@@ -1,6 +1,7 @@
 import pypdf
 import fitz
 import os
+import regex
 
 def cut_pdf(input_file:str, output_file:str):
     """ Cut the PDF file to remove duplicate pages
@@ -92,7 +93,6 @@ def concat_pdfs(pdf_files, output_file: str):
 
 if __name__ == '__main__':
     for file in os.listdir('files'):
-        continue
         if file[-4:] != '.pdf':
             continue
         print("Reading " + file)
@@ -103,6 +103,9 @@ if __name__ == '__main__':
 
 
     pdf_files = [file[:-4] for file in os.listdir("results") if file.endswith(".pdf")]
+    # find number in the file name and sort by it
+    pdf_files.sort(key=lambda x: int(regex.search(r'\d+', x).group()) if regex.search(r'\d+', x) else float('inf'))
+    
 
     print("📚 Files to concatenate:", pdf_files)
     if not pdf_files:
